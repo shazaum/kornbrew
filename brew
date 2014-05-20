@@ -46,7 +46,7 @@ sub check_dirs {
 	for (keys %config) {
 		$dirname = $config{$_};
 		if (! -d $dirname) {
-			mkpath $dirname or die "Can't create $dirname";
+			mkpath $dirname or die $!;
 			say 'Created: '.$dirname;
 		}
 	}
@@ -84,20 +84,20 @@ sub checked_sha {
 	my $sha = Digest::SHA->new('new');
 	$sha->addfile($filename);
 	say $sha->digest;
-
 }
 
 sub fetch_package {
 	my $url = shift or die $!;
+	my $formula = shift or die $!;
 	my $ff = File::Fetch->new(uri => $url);
-	my $dirname = "$config{'build_dir'}/";
+	my $dirname = "$config{'build_dir'}/$formula/";
 	if (! -d $dirname) {
 		mkpath $dirname or die $!;
 	}
 	my $where = $ff->fetch( to => "$dirname") or die $ff->error;
 	my $filename = $ff->output_file;
-	say "filename: $filename";
-	say "dirname: $dirname";
+	say "Fetched filename: $filename";
+	say "Fetched in dirname: $dirname";
 
 
 }
@@ -106,22 +106,34 @@ sub url_to_filename {
 	my $url = shift or die $!;
 	my @ar_url = split (/\//, $url);
 	return $ar_url[$#ar_url];
-
 }
 
 sub brew_install {
 	my $formula;
 	$formula = shift or usage;
-	my $filepath = "$config{'formula_dir'}/$formula/"; 
-	if (-e "$filepath") {
-		push @INC, "$filepath";
-		#say "$filepath";
+	my $formula_path = "$config{'formula_dir'}/$formula"; 
+	my $build_path = "$config{'build_dir'}/$formula"; 
+	my $file_path;
+	my $file_name;
+	if (-e "$formula_path") {
+		push @INC, "$formula_path";
 		require Formula;
 		my $formula_selected = Formula->new("$config{'library_dir'}/$formula");
-		say $formula_selected->{name};
-		say $formula_selected->{homepage};
-		say url_to_filename($formula_selected->{url});
-		#fetch_package($formula_selected->{url});
+		say "Formula : $formula_selected->{name}";
+		say "Homepage: $formula_selected->{homepage}";
+
+		$file_name = url_to_filename($formula_selected->{url});
+		$file_path = "$build_path/$file_name";
+		if (! -d $build_path) {
+			mkpath $build_path or die $!;
+			say 'Created: '.$build_path;
+		}
+
+		if (-e $file_path) {
+			say "file_path $file_path";
+		} else {
+			fetch_package($formula_selected->{url},$formula);
+		}
 	}
 }
 
