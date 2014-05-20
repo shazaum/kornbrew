@@ -1,0 +1,154 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use encoding 'utf8';
+use 5.14.1;
+
+use constant AUTHOR		=> 'Antonio Feitosa aka TeeBSD <https://twitter.com/teebsd>';
+use constant LICENSE	=> 'http://opensource.org/licenses/BSD-2-Clause';
+use Env qw(HOME);
+
+use Data::Dumper;
+use File::Path;
+use File::Fetch;
+use Digest::SHA;
+
+my $program;
+my %config;
+
+$program = 'brew';
+
+my $base_dir;
+$base_dir = "$HOME/.kornbrew";
+
+%config = (
+	base_dir	=> $base_dir,
+	formula_dir	=> "$base_dir/Formulas",
+	library_dir	=> "$base_dir/Library",
+	build_dir	=> "$base_dir/.builds",
+	install_dir	=> "$HOME/opt/bin",
+);
+
+undef $base_dir;
+
+
+
+sub usage {
+	#say Dumper(['$program',$program], ['$base_dir', $base_dir], ['%config', %config]);
+	#say "base_dir ok!" if defined $base_dir;
+	say 'usage: brew [ search | install | list | doctor | uninstall ] [ package_name ]';
+	exit 1;
+
+}
+
+sub check_dirs {
+	my $dirname;
+	for (keys %config) {
+		$dirname = $config{$_};
+		if (! -d $dirname) {
+			mkpath $dirname or die "Can't create $dirname";
+			say 'Created: '.$dirname;
+		}
+	}
+}
+
+sub brew_search { 
+	my $formula = shift or undef;
+	my $file;
+	opendir(DIR, $config{'formula_dir'}) or die $!;
+	while ($file = readdir(DIR)) {
+		if (defined $formula) {
+			$file =~ /$formula/ && say $file;
+		} else {
+			$file =~ /\w+/ && say $file;
+		}
+	}
+}
+
+sub brew_list { 
+	my $formula = shift or undef;
+	my $file;
+	opendir(DIR, $config{'library_dir'}) or die $!;
+	while ($file = readdir(DIR)) {
+		if (defined $formula) {
+			$file =~ /$formula/ && say $file;
+		} else {
+			$file =~ /\w+/ && say $file;
+		}
+	}
+}
+
+sub checked_sha {
+	my $filename = shift or undef;
+	my $sha_check = shift or undef;
+	my $sha = Digest::SHA->new('new');
+	$sha->addfile($filename);
+	say $sha->digest;
+
+}
+
+sub fetch_package {
+	my $url = shift or die $!;
+	my $ff = File::Fetch->new(uri => $url);
+	my $dirname = "$config{'build_dir'}/";
+	if (! -d $dirname) {
+		mkpath $dirname or die $!;
+	}
+	my $where = $ff->fetch( to => "$dirname") or die $ff->error;
+	my $filename = $ff->output_file;
+	say "filename: $filename";
+	say "dirname: $dirname";
+
+
+}
+
+sub url_to_filename {
+	my $url = shift or die $!;
+	my @ar_url = split (/\//, $url);
+	return $ar_url[$#ar_url];
+
+}
+
+sub brew_install {
+	my $formula;
+	$formula = shift or usage;
+	my $filepath = "$config{'formula_dir'}/$formula/"; 
+	if (-e "$filepath") {
+		push @INC, "$filepath";
+		#say "$filepath";
+		require Formula;
+		my $formula_selected = Formula->new("$config{'library_dir'}/$formula");
+		say $formula_selected->{name};
+		say $formula_selected->{homepage};
+		say url_to_filename($formula_selected->{url});
+		#fetch_package($formula_selected->{url});
+	}
+}
+
+sub brew_doctor {
+	say "$program doctor";
+}
+
+sub brew_uninstall {
+	my $formula;
+	$formula = shift or usage; 
+	say "$program uninstall";
+}
+
+sub main {
+	check_dirs;
+	if (! @ARGV) {
+		usage;
+	} else {
+		given ($ARGV[0]) {
+			when ('search') { brew_search($ARGV[1]); }
+			when ('install') { brew_install $ARGV[1]; }
+			when ('list') { brew_list $ARGV[1]; }
+			when ('doctor') { brew_doctor $ARGV[1]; }
+			when ('uninstall') { brew_search $ARGV[1]; }
+			default { usage; }
+		}
+	}
+}
+
+main;
