@@ -13,6 +13,7 @@ use File::Path;
 use File::Fetch;
 use Digest::SHA;
 use Archive::Extract;
+use Cwd;
 
 my $program;
 my %config;
@@ -95,17 +96,27 @@ sub fetch_package {
 	my $ff = File::Fetch->new(uri => $url);
 	my $dirname = "$config{'build_dir'}/$formula/";
 	if (! -d $dirname) { mkpath $dirname or die $!;	}
+    say "Fetching $url";
 	my $where = $ff->fetch( to => "$dirname") or die $ff->error;
 	my $filename = $ff->output_file;
-	say "Fetched filename: $filename";
-	say "Fetched in dirname: $dirname";
+    #say "Fetched filename: $filename";
+    #say "Fetched in dirname: $dirname";
 }
 
-sub extract_package {
-	my $package = shift or die $!;
-	my $ae = Archive::Extract->new( archive => $package );
-	say $ae->extract;
-	#To continue
+sub extract_file {
+	my $file = shift or die $!;
+	my $target = shift or die $!;
+    my $extracted_path;
+	my $ae = Archive::Extract->new( archive => $file );
+	if (-d "$target") {
+        say "Extracting $file ...";
+        $ae->extract( to => $target);
+        $extracted_path = $ae->extract_path;
+        return "$extracted_path";
+    } else {
+        say "Target: [$target] does not exist!";
+        exit 1;
+    }
 }
 
 sub url_to_filename {
@@ -123,6 +134,8 @@ sub brew_install {
 	my $file_name;
 	my $formula_selected;
 	my $result_checked_sha;
+    my $extracted_path;
+    my $current_dir;
 	if (-e "$formula_path") {
 		push @INC, "$formula_path";
 		require Formula;
@@ -135,12 +148,19 @@ sub brew_install {
 		$result_checked_sha = checked_sha($file_path,$formula_selected->{sha1});
 		if (! ((-e $file_path) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
 		if ( -e $file_path ) {
-			extract_package($file_path);
-		}
-
-
-
-
+            $extracted_path = extract_file($file_path,$build_path);
+            say "extracted_path: $extracted_path";
+		} else {
+            say "Download file missed! [$file_path]";
+            exit 1
+        }
+        if ( -e $extracted_path ) {
+            chdir $extracted_path;
+        } else {
+            say "Package dir missed! [$extracted_path]";
+        }
+        $current_dir = getcwd;
+        say "CWD: $current_dir";
 
 	} else {
 		say "Formula [$formula] does not exist!";
