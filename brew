@@ -31,11 +31,8 @@ $base_dir = "$HOME/.kornbrew";
 
 undef $base_dir;
 
-
-
 sub usage {
 	#say Dumper(['$program',$program], ['$base_dir', $base_dir], ['%config', %config]);
-	#say "base_dir ok!" if defined $base_dir;
 	say 'usage: brew [ search | install | list | doctor | uninstall ] [ package_name ]';
 	exit 1;
 
@@ -79,11 +76,16 @@ sub brew_list {
 }
 
 sub checked_sha {
-	my $filename = shift or undef;
+	my $alg=1;
+	my $file = shift or undef;
 	my $sha_check = shift or undef;
-	my $sha = Digest::SHA->new('new');
-	$sha->addfile($filename);
-	say $sha->digest;
+	my $sha = Digest::SHA->new($alg);
+	$sha->addfile($file);
+	if ($sha->hexdigest eq $sha_check) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 sub fetch_package {
@@ -91,15 +93,11 @@ sub fetch_package {
 	my $formula = shift or die $!;
 	my $ff = File::Fetch->new(uri => $url);
 	my $dirname = "$config{'build_dir'}/$formula/";
-	if (! -d $dirname) {
-		mkpath $dirname or die $!;
-	}
+	if (! -d $dirname) { mkpath $dirname or die $!;	}
 	my $where = $ff->fetch( to => "$dirname") or die $ff->error;
 	my $filename = $ff->output_file;
 	say "Fetched filename: $filename";
 	say "Fetched in dirname: $dirname";
-
-
 }
 
 sub url_to_filename {
@@ -115,22 +113,22 @@ sub brew_install {
 	my $build_path = "$config{'build_dir'}/$formula"; 
 	my $file_path;
 	my $file_name;
+	my $formula_selected;
+	my $result_checked_sha;
 	if (-e "$formula_path") {
 		push @INC, "$formula_path";
 		require Formula;
-		my $formula_selected = Formula->new("$config{'library_dir'}/$formula");
+		$formula_selected = Formula->new("$config{'library_dir'}/$formula");
 		say "Formula : $formula_selected->{name}";
 		say "Homepage: $formula_selected->{homepage}";
-
 		$file_name = url_to_filename($formula_selected->{url});
 		$file_path = "$build_path/$file_name";
-		if (! -d $build_path) {
-			mkpath $build_path or die $!;
-			say 'Created: '.$build_path;
-		}
-
-		if (-e $file_path) {
+		if (! -d $build_path) {	mkpath $build_path or die $!; } #say 'Created: '.$build_path;
+		$result_checked_sha = checked_sha($file_path,$formula_selected->{sha1});
+		if ((-e $file_path) && $result_checked_sha) {
 			say "file_path $file_path";
+			#say checked_sha($file_path,$formula_selected->{sha1});
+			say "hash_formula: $formula_selected->{sha1}";
 		} else {
 			fetch_package($formula_selected->{url},$formula);
 		}
