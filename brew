@@ -4,14 +4,15 @@ use warnings;
 use encoding 'utf8';
 use 5.14.1;
 
-use constant AUTHOR		=> 'Antonio Feitosa aka TeeBSD <https://twitter.com/teebsd>';
+use constant AUTHOR	=> 'Antonio Feitosa aka TeeBSD <https://twitter.com/teebsd>';
 use constant LICENSE	=> 'http://opensource.org/licenses/BSD-2-Clause';
 use Env qw(HOME);
 
-use Data::Dumper;
+#use Data::Dumper;
 use File::Path;
 use File::Fetch;
 use Digest::SHA;
+use Archive::Extract;
 
 my $program;
 my %config;
@@ -100,6 +101,13 @@ sub fetch_package {
 	say "Fetched in dirname: $dirname";
 }
 
+sub extract_package {
+	my $package = shift or die $!;
+	my $ae = Archive::Extract->new( archive => $package );
+	say $ae->extract;
+	#To continue
+}
+
 sub url_to_filename {
 	my $url = shift or die $!;
 	my @ar_url = split (/\//, $url);
@@ -123,9 +131,17 @@ sub brew_install {
 		say "Homepage: $formula_selected->{homepage}";
 		$file_name = url_to_filename($formula_selected->{url});
 		$file_path = "$build_path/$file_name";
-		if (! -d $build_path) {	mkpath $build_path or die $!; } #say 'Created: '.$build_path;
+		if (! -d $build_path) {	mkpath $build_path or die $!; }
 		$result_checked_sha = checked_sha($file_path,$formula_selected->{sha1});
 		if (! ((-e $file_path) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
+		if ( -e $file_path ) {
+			extract_package($file_path);
+		}
+
+
+
+
+
 	} else {
 		say "Formula [$formula] does not exist!";
 		exit 1;
