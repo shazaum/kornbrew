@@ -13,6 +13,7 @@ use File::Path;
 use File::Fetch;
 use Digest::SHA;
 use Archive::Extract;
+use Cwd;
 
 my $program;
 my %config;
@@ -171,12 +172,14 @@ sub brew_install {
         }
         if ( -d $extracted_path ) {
             chdir $extracted_path;
+            say "CWD: ".getcwd;
             $formula_selected->install();
         } else {
             say "Package dir missed! [$extracted_path]";
         }
         if ( -d $installed_path ) {
             chdir $installed_path;
+            say "CWD: ".getcwd;
             say "Installed: $installed_path";
             my $formula_bin_folder = "$installed_path/bin";
             @listed_like_ls = list_folder("$installed_path/bin");
@@ -184,7 +187,6 @@ sub brew_install {
         } else {
             say "Installed dir missed! [$installed_path]";
         }
-
 
 	} else {
 		say "Formula [$formula] does not exist!";

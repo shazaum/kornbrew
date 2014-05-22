@@ -23,7 +23,6 @@ sub new {
 	$self->{type}		= "package";
 	$self->{depends}	= qw(gmake);
 	$self->{make}		= "make";
-    $self->{cfg_flags}  = "--enable-utf8";
     
     # Changeable - END
     bless( $self, $class );
@@ -34,8 +33,18 @@ sub install {
 	my $self        = shift;
     my $make        = $self->{make};
     my $prefix      = $self->{prefix};
-    my $cfg_flags   = $self->{cfg_flags};
-    system("./configure --prefix $prefix $cfg_flags");
+    my @command;
+    my @cfg_flags = ("./configure",
+        "--prefix $prefix",
+    # Changeable - START
+    
+        "--enable-utf8",
+    
+    # Changeable - END
+    );
+
+    push(@command,"$_ ") foreach (@cfg_flags);
+    system(@command);
     system("$make");
     system("$make install");
 }

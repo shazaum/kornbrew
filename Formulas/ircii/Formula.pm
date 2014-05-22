@@ -15,11 +15,6 @@ sub new {
     $self->{type}       = "package";
     $self->{depends}    = qw(gmake);
     $self->{make}       = "make";
-    $self->{cfg_flags}  = ' --disable-debug
-                            --enable-ipv6
-                            --disable-dependency-tracking
-                            --with-default=irc.freenode.net
-    ';
 
     # Changeable - END
     bless( $self, $class );
@@ -30,8 +25,12 @@ sub install {
     my $self        = shift;
     my $make        = $self->{make};
     my $prefix      = $self->{prefix};
-    my $cfg_flags   = $self->{cfg_flags};
-    system("./configure --prefix $prefix $cfg_flags");
+    system("./configure --prefix $prefix",
+        "--disable-debug",
+        "--enable-ipv6",
+        "--disable-dependency-tracking",
+        "--with-default=irc.freenode.net"
+    );
     system("$make");
     system("$make install");
 }
