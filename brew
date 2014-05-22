@@ -13,7 +13,6 @@ use File::Path;
 use File::Fetch;
 use Digest::SHA;
 use Archive::Extract;
-use Cwd;
 
 my $program;
 my %config;
@@ -51,6 +50,16 @@ sub check_dirs {
 	}
 }
 
+sub list_folder {
+	my $path = shift or undef;
+    my $item;
+    my @result;
+    opendir(DIR, $config{'library_dir'}) or dir $!;
+    push(@result,$item) while ($item = readdir(DIR));
+    closedir(DIR);
+    return @result;
+}
+
 sub brew_search { 
 	my $formula = shift or undef;
 	my $file;
@@ -62,6 +71,7 @@ sub brew_search {
 			$file =~ /\w+/ && say $file;
 		}
 	}
+    closedir(DIR);
 }
 
 sub brew_list { 
@@ -75,6 +85,7 @@ sub brew_list {
 			$file =~ /\w+/ && say $file;
 		}
 	}
+    closedir(DIR);
 }
 
 sub checked_sha {
@@ -130,12 +141,13 @@ sub brew_install {
 	$formula = shift or usage;
 	my $formula_path = "$config{'formula_dir'}/$formula"; 
 	my $build_path = "$config{'build_dir'}/$formula"; 
-	my $file_path;
+	my $path_downloaded_file;
 	my $file_name;
 	my $formula_selected;
 	my $result_checked_sha;
     my $extracted_path;
     my $current_dir;
+    my @listed_like_ls;
 	if (-e "$formula_path") {
 		push @INC, "$formula_path";
 		require Formula;
@@ -143,15 +155,15 @@ sub brew_install {
 		say "Formula : $formula_selected->{name}";
 		say "Homepage: $formula_selected->{homepage}";
 		$file_name = url_to_filename($formula_selected->{url});
-		$file_path = "$build_path/$file_name";
+		$path_downloaded_file = "$build_path/$file_name";
 		if (! -d $build_path) {	mkpath $build_path or die $!; }
-		$result_checked_sha = checked_sha($file_path,$formula_selected->{sha1});
-		if (! ((-e $file_path) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
-		if ( -e $file_path ) {
-            $extracted_path = extract_file($file_path,$build_path);
+		$result_checked_sha = checked_sha($path_downloaded_file,$formula_selected->{sha1});
+		if (! ((-e $path_downloaded_file) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
+		if ( -e $path_downloaded_file ) {
+            $extracted_path = extract_file($path_downloaded_file,$build_path);
             say "extracted_path: $extracted_path";
 		} else {
-            say "Download file missed! [$file_path]";
+            say "Download file missed! [$path_downloaded_file]";
             exit 1
         }
         if ( -e $extracted_path ) {
@@ -159,12 +171,9 @@ sub brew_install {
         } else {
             say "Package dir missed! [$extracted_path]";
         }
-        $current_dir = getcwd;
-        say "CWD: $current_dir";
-        $formula_selected->install();
-
-
-
+        #$formula_selected->install();
+        @listed_like_ls = list_folder($path_downloaded_file);
+        say "@listed_like_ls";
 
 	} else {
 		say "Formula [$formula] does not exist!";
