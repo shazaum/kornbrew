@@ -91,12 +91,15 @@ sub checked_sha {
 	my $file = shift or undef;
 	my $sha_check = shift or undef;
 	my $sha = Digest::SHA->new($alg);
-	$sha->addfile($file);
-	if ($sha->hexdigest eq $sha_check) {
-		return 1;
+    if (-e $file ) {
+        $sha->addfile($file);
+	    if ($sha->hexdigest eq $sha_check) {
+		    return 1;
+        }
 	} else {
-		return 0;
+        say "File [$file] not found!";
 	}
+		return 0;
 }
 
 sub fetch_package {
