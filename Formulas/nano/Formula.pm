@@ -42,7 +42,6 @@ sub install {
     
     # Changeable - END
     );
-
     push(@command,"$_ ") foreach (@cfg_flags);
     system(@command);
     system("$make");
