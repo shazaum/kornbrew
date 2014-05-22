@@ -1,6 +1,14 @@
 #!/usr/bin/env perl
 package Formula;
 
+use strict;
+use warnings;
+use encoding 'utf8';
+use 5.14.1;
+
+use constant AUTHOR     => 'Antonio Feitosa aka TeeBSD <https://twitter.com/teebsd>';
+use constant LICENSE    => 'http://opensource.org/licenses/BSD-2-Clause';
+
 sub new {
     my $class  = shift;
     my $prefix = shift;
@@ -36,3 +44,4 @@ sub install {
 }
 
 1;
+
