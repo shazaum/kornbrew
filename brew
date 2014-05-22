@@ -161,6 +161,10 @@ sub brew_install {
         }
         $current_dir = getcwd;
         say "CWD: $current_dir";
+        $formula_selected->install();
+
+
+
 
 	} else {
 		say "Formula [$formula] does not exist!";
