@@ -60,32 +60,30 @@ sub list_folder {
     return @result;
 }
 
-sub brew_search { 
-	my $formula = shift or undef;
-	my $file;
-	opendir(DIR, $config{'formula_dir'}) or die $!;
-	while ($file = readdir(DIR)) {
-		if (defined $formula) {
-			$file =~ /$formula/ && say $file;
+sub search_inside_folder { 
+	my $query = shift or undef;
+	my $path = shift or undef;
+    my @listed_like_ls;
+    my @result;
+    @listed_like_ls = list_folder();
+	foreach (@listed_like_ls) {
+		if (defined $query) {
+			/$query/ && push (@result, $_);
 		} else {
-			$file =~ /\w+/ && say $file;
+			/\w+/ && push (@result, $_);
 		}
 	}
-    closedir(DIR);
+    return @result;
+}
+
+sub brew_search {
+    my $formula = shift or undef;
+    say foreach search_inside_folder($formula,$config{'formula_dir'});
 }
 
 sub brew_list { 
-	my $formula = shift or undef;
-	my $file;
-	opendir(DIR, $config{'library_dir'}) or die $!;
-	while ($file = readdir(DIR)) {
-		if (defined $formula) {
-			$file =~ /$formula/ && say $file;
-		} else {
-			$file =~ /\w+/ && say $file;
-		}
-	}
-    closedir(DIR);
+    my $formula = shift or undef;
+    say foreach search_inside_folder($formula,$config{'library_dir'});
 }
 
 sub checked_sha {
