@@ -54,18 +54,18 @@ sub list_folder {
 	my $path = shift or undef;
     my $item;
     my @result;
-    opendir(DIR, $config{'library_dir'}) or dir $!;
+    opendir(DIR, $path) or die $!;
     push(@result,$item) while ($item = readdir(DIR));
     closedir(DIR);
     return @result;
 }
 
 sub search_inside_folder { 
-	my $query = shift or undef;
 	my $path = shift or undef;
+	my $query = shift or undef;
     my @listed_like_ls;
     my @result;
-    @listed_like_ls = list_folder();
+    @listed_like_ls = list_folder($path);
 	foreach (@listed_like_ls) {
 		if (defined $query) {
 			/$query/ && push (@result, $_);
@@ -78,12 +78,12 @@ sub search_inside_folder {
 
 sub brew_search {
     my $formula = shift or undef;
-    say foreach search_inside_folder($formula,$config{'formula_dir'});
+    say foreach search_inside_folder($config{'formula_dir'}, $formula);
 }
 
 sub brew_list { 
     my $formula = shift or undef;
-    say foreach search_inside_folder($formula,$config{'library_dir'});
+    say foreach search_inside_folder($config{'formula_dir'}, $formula);
 }
 
 sub checked_sha {
@@ -146,10 +146,12 @@ sub brew_install {
     my $extracted_path;
     my $current_dir;
     my @listed_like_ls;
-	if (-e "$formula_path") {
-		push @INC, "$formula_path";
+    my $installed_path = "$config{'library_dir'}/$formula";
+    my $formula_bin_folder;
+	if (-e $formula_path) {
+		push (@INC, "$formula_path");
 		require Formula;
-		$formula_selected = Formula->new("$config{'library_dir'}/$formula");
+		$formula_selected = Formula->new($installed_path);
 		say "Formula : $formula_selected->{name}";
 		say "Homepage: $formula_selected->{homepage}";
 		$file_name = url_to_filename($formula_selected->{url});
@@ -164,14 +166,22 @@ sub brew_install {
             say "Download file missed! [$path_downloaded_file]";
             exit 1
         }
-        if ( -e $extracted_path ) {
+        if ( -d $extracted_path ) {
             chdir $extracted_path;
+            $formula_selected->install();
         } else {
             say "Package dir missed! [$extracted_path]";
         }
-        #$formula_selected->install();
-        @listed_like_ls = list_folder($path_downloaded_file);
-        say "@listed_like_ls";
+        if ( -d $installed_path ) {
+            chdir $installed_path;
+            say "Installed: $installed_path";
+            my $formula_bin_folder = "$installed_path/bin";
+            @listed_like_ls = list_folder("$installed_path/bin");
+            symlink ("$formula_bin_folder/$_","$config{'install_dir'}/$_") foreach search_inside_folder($formula_bin_folder);
+        } else {
+            say "Installed dir missed! [$installed_path]";
+        }
+
 
 	} else {
 		say "Formula [$formula] does not exist!";
