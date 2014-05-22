@@ -33,6 +33,7 @@ sub install {
     my $self        = shift;
     my $make        = $self->{make};
     my $prefix      = $self->{prefix};
+    my @command;
     my @cfg_flags   = ("./configure",
         "--prefix $prefix",
         # Changeable - START
@@ -40,12 +41,12 @@ sub install {
         "--disable-debug",
         "--enable-ipv6",
         "--disable-dependency-tracking",
-        "--with-default=irc.freenode.net"
+        "--with-default=irc.freenode.net",
 
         # Changeable - END
     );
     push(@command,"$_ ") foreach (@cfg_flags);
-    system(@command);
+    system("@command");
     system("$make");
     system("$make install");
 }
