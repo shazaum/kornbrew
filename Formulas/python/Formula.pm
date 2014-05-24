@@ -15,14 +15,14 @@ sub new {
     my $self = {};
     $self->{prefix} = $prefix;
     # Changeable - START
-
-    $self->{name}       = "ircii";
-    $self->{homepage}   = "http://www.eterna.com.au/ircii/";
-    $self->{url}        = "http://ircii.warped.com/ircii-20131230.tar.bz2";
-    $self->{sha1}       = "b59f8fcd344c09b8820f6efbcc74ba9af7e587ce";
+    
+    $self->{name}       = "python";
+    $self->{homepage}   = "http://www.python.org";
+    $self->{url}        = "http://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz";
+    $self->{sha1}       = "8328d9f1d55574a287df384f4931a3942f03da64";
     $self->{type}       = "package";
     $self->{make}       = "make";
-
+    
     # Changeable - END
     bless( $self, $class );
     return $self;
@@ -34,20 +34,21 @@ sub install {
     my $prefix = $self->{prefix};
     my @command;
     my @cfg_flags = ("./configure", "--prefix $prefix",
-        # Changeable - START
-
-        "--disable-debug",
-        "--enable-ipv6",
-        "--disable-dependency-tracking",
-        "--with-default-server=irc.freenode.net",
-
-        # Changeable - END
+    # Changeable - START
+    
+    
+    # Changeable - END
     );
     push(@command,"$_ ") foreach (@cfg_flags);
     system("@command");
     system("$make");
     system("$make install");
+    # Changeable - START
+    
+    system("ftp http://python-distribute.org/distribute_setup.py");
+    system("python distribute_setup.py");
+
+    # Changeable - END
 }
 
 1;
-

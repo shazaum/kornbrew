@@ -9,11 +9,11 @@ use constant LICENSE    => 'http://opensource.org/licenses/BSD-2-Clause';
 use Env qw(HOME);
 
 #use Data::Dumper;
-use File::Path;
+use File::Path qw(make_path remove_tree);
 use File::Fetch;
 use Digest::SHA;
 use Archive::Extract;
-use Cwd;
+#use Cwd;
 
 my $program;
 my %config;
@@ -45,7 +45,7 @@ sub check_dirs {
     for (keys %config) {
         $dirname = $config{$_};
         if (! -d $dirname) {
-            mkpath $dirname or die $!;
+            make_path($dirname, { verbose => 1 }) or die $!;
             say 'Created: '.$dirname;
         }
     }
@@ -106,11 +106,12 @@ sub checked_sha {
 sub fetch_package {
     my $url = shift or die $!;
     my $formula = shift or die $!;
-    my $ff = File::Fetch->new(uri => $url);
+    my $ff = File::Fetch->new(uri => "$url");
     my $dirname = "$config{'build_dir'}/$formula/";
-    if (! -d $dirname) { mkpath $dirname or die $!; }
+    if (! -d $dirname) { make_path($dirname, { verbose => 1 }) or die $!; }
+    $File::Fetch::WARN = 0;
     say "Fetching $url";
-    my $where = $ff->fetch(to => "$dirname") or die $ff->error;
+    my $where = $ff->fetch(to => $dirname);
     my $filename = $ff->output_file;
     #say "Fetched filename: $filename";
     #say "Fetched in dirname: $dirname";
@@ -122,7 +123,7 @@ sub extract_file {
     my $extracted_path;
     my $ae = Archive::Extract->new( archive => $file );
     if (-d "$target") {
-        say "Extracting $file ...";
+        say "Extracting $file";
         $ae->extract(to => "$target");
         $extracted_path = $ae->extract_path;
         return "$extracted_path";
@@ -140,7 +141,7 @@ sub url_to_filename {
 
 sub formula_is_installed {
     my $formula = shift or usage;
-    if ( -d "$config{'formula_dir'}/$formula") {
+    if ( -d "$config{'library_dir'}/$formula") {
         return 1;
     } else {
         return 0;
@@ -170,26 +171,26 @@ sub brew_install {
         say "Homepage: $formula_selected->{homepage}";
         $file_name = url_to_filename($formula_selected->{url});
         $path_downloaded_file = "$build_path/$file_name";
-        if (! -d $build_path) { mkpath $build_path or die $!; }
+        if (! -d $build_path) { make_path($build_path, { verbose => 1 }) or die $!; }
         $result_checked_sha = checked_sha($path_downloaded_file,$formula_selected->{sha1});
         if (! ((-e $path_downloaded_file) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
         if ( -e $path_downloaded_file ) {
             $extracted_path = extract_file($path_downloaded_file,$build_path);
-            say "extracted_path: $extracted_path";
+            #say "extracted_path: $extracted_path";
         } else {
             say "Download file missed! [$path_downloaded_file]";
             exit 1
         }
         if ( -d $extracted_path ) {
             chdir $extracted_path;
-            say "CWD: ".getcwd;
+            #say "CWD: ".getcwd;
             $formula_selected->install();
         } else {
             say "Package dir missed! [$extracted_path]";
         }
         if ( -d $installed_path ) {
             chdir $installed_path;
-            say "CWD: ".getcwd;
+            #say "CWD: ".getcwd;
             say "Installed: $installed_path";
             my $formula_bin_folder = "$installed_path/bin";
             @listed_like_ls = list_folder("$installed_path/bin");
@@ -209,9 +210,13 @@ sub brew_doctor {
 }
 
 sub brew_uninstall {
-    my $formula;
-    $formula = shift or usage; 
-    say "$program uninstall";
+    my $formula = shift or usage; 
+    if (formula_is_installed($formula)) {
+        remove_tree("$config{'library_dir'}/$formula", { verbose => 1 }) or die $!;
+    } else { 
+        say "Formula is NOT installed!";
+        exit 1;
+    }
 }
 
 sub main {
@@ -224,7 +229,7 @@ sub main {
             when ('install') { brew_install $ARGV[1]; }
             when ('list') { brew_list $ARGV[1]; }
             when ('doctor') { brew_doctor $ARGV[1]; }
-            when ('uninstall') { brew_search $ARGV[1]; }
+            when ('uninstall') { brew_uninstall $ARGV[1]; }
             default { usage; }
         }
     }
