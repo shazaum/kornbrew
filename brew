@@ -4,8 +4,8 @@ use warnings;
 use encoding 'utf8';
 use 5.14.1;
 
-use constant AUTHOR		=> 'Antonio Feitosa aka TeeBSD <https://twitter.com/teebsd>';
-use constant LICENSE	=> 'http://opensource.org/licenses/BSD-2-Clause';
+use constant AUTHOR     => 'Antonio Feitosa aka TeeBSD <https://twitter.com/teebsd>';
+use constant LICENSE    => 'http://opensource.org/licenses/BSD-2-Clause';
 use Env qw(HOME);
 
 #use Data::Dumper;
@@ -24,35 +24,35 @@ my $base_dir;
 $base_dir = "$HOME/.kornbrew";
 
 %config = (
-	base_dir	=> $base_dir,
-	formula_dir	=> "$base_dir/Formulas",
-	library_dir	=> "$base_dir/Library",
-	build_dir	=> "$base_dir/.builds",
-	install_dir	=> "$HOME/opt/bin",
+    base_dir        => $base_dir,
+    formula_dir     => "$base_dir/Formulas",
+    library_dir     => "$base_dir/Library",
+    build_dir       => "$base_dir/.builds",
+    install_dir     => "$HOME/opt/bin",
 );
 
 undef $base_dir;
 
 sub usage {
-	#say Dumper(['$program',$program], ['$base_dir', $base_dir], ['%config', %config]);
-	say 'usage: brew [ search | install | list | doctor | uninstall ] [ package_name ]';
-	exit 1;
+    #say Dumper(['$program',$program], ['$base_dir', $base_dir], ['%config', %config]);
+    say 'usage: brew [ search | install | list | doctor | uninstall ] [ package_name ]';
+    exit 1;
 
 }
 
 sub check_dirs {
-	my $dirname;
-	for (keys %config) {
-		$dirname = $config{$_};
-		if (! -d $dirname) {
-			mkpath $dirname or die $!;
-			say 'Created: '.$dirname;
-		}
-	}
+    my $dirname;
+    for (keys %config) {
+        $dirname = $config{$_};
+        if (! -d $dirname) {
+            mkpath $dirname or die $!;
+            say 'Created: '.$dirname;
+        }
+    }
 }
 
 sub list_folder {
-	my $path = shift or undef;
+    my $path = shift or undef;
     my $item;
     my @result;
     opendir(DIR, $path) or die $!;
@@ -62,18 +62,18 @@ sub list_folder {
 }
 
 sub search_inside_folder { 
-	my $path = shift or undef;
-	my $query = shift or undef;
+    my $path = shift or undef;
+    my $query = shift or undef;
     my @listed_like_ls;
     my @result;
     @listed_like_ls = list_folder($path);
-	foreach (@listed_like_ls) {
-		if (defined $query) {
-			/$query/ && push (@result, $_);
-		} else {
-			/\w+/ && push (@result, $_);
-		}
-	}
+    foreach (@listed_like_ls) {
+        if (defined $query) {
+            /$query/ && push (@result, $_);
+        } else {
+            /\w+/ && push (@result, $_);
+        }
+    }
     return @result;
 }
 
@@ -84,46 +84,46 @@ sub brew_search {
 
 sub brew_list { 
     my $formula = shift or undef;
-    say foreach search_inside_folder($config{'formula_dir'}, $formula);
+    say foreach search_inside_folder($config{'library_dir'}, $formula);
 }
 
 sub checked_sha {
-	my $alg=1;
-	my $file = shift or undef;
-	my $sha_check = shift or undef;
-	my $sha = Digest::SHA->new($alg);
+    my $alg=1;
+    my $file = shift or undef;
+    my $sha_check = shift or undef;
+    my $sha = Digest::SHA->new($alg);
     if (-e $file ) {
         $sha->addfile($file);
-	    if ($sha->hexdigest eq $sha_check) {
-		    return 1;
+        if ($sha->hexdigest eq $sha_check) {
+            return 1;
         }
-	} else {
+    } else {
         say "File [$file] not found!";
-	}
-		return 0;
+    }
+        return 0;
 }
 
 sub fetch_package {
-	my $url = shift or die $!;
-	my $formula = shift or die $!;
-	my $ff = File::Fetch->new(uri => $url);
-	my $dirname = "$config{'build_dir'}/$formula/";
-	if (! -d $dirname) { mkpath $dirname or die $!;	}
+    my $url = shift or die $!;
+    my $formula = shift or die $!;
+    my $ff = File::Fetch->new(uri => $url);
+    my $dirname = "$config{'build_dir'}/$formula/";
+    if (! -d $dirname) { mkpath $dirname or die $!; }
     say "Fetching $url";
-	my $where = $ff->fetch( to => "$dirname") or die $ff->error;
-	my $filename = $ff->output_file;
+    my $where = $ff->fetch(to => "$dirname") or die $ff->error;
+    my $filename = $ff->output_file;
     #say "Fetched filename: $filename";
     #say "Fetched in dirname: $dirname";
 }
 
 sub extract_file {
-	my $file = shift or die $!;
-	my $target = shift or die $!;
+    my $file = shift or die $!;
+    my $target = shift or die $!;
     my $extracted_path;
-	my $ae = Archive::Extract->new( archive => $file );
-	if (-d "$target") {
+    my $ae = Archive::Extract->new( archive => $file );
+    if (-d "$target") {
         say "Extracting $file ...";
-        $ae->extract( to => $target);
+        $ae->extract(to => "$target");
         $extracted_path = $ae->extract_path;
         return "$extracted_path";
     } else {
@@ -133,40 +133,50 @@ sub extract_file {
 }
 
 sub url_to_filename {
-	my $url = shift or die $!;
-	my @ar_url = split (/\//, $url);
-	return $ar_url[$#ar_url];
+    my $url = shift or die $!;
+    my @ar_url = split (/\//, $url);
+    return $ar_url[$#ar_url];
 }
 
+sub formula_is_installed {
+    my $formula = shift or usage;
+    if ( -d "$config{'formula_dir'}/$formula") {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+
 sub brew_install {
-	my $formula;
-	$formula = shift or usage;
-	my $formula_path = "$config{'formula_dir'}/$formula"; 
-	my $build_path = "$config{'build_dir'}/$formula"; 
-	my $path_downloaded_file;
-	my $file_name;
-	my $formula_selected;
-	my $result_checked_sha;
+    my $formula = shift or usage;
+    my $formula_path = "$config{'formula_dir'}/$formula"; 
+    my $build_path = "$config{'build_dir'}/$formula"; 
+    my $path_downloaded_file;
+    my $file_name;
+    my $formula_selected;
+    my $result_checked_sha;
     my $extracted_path;
     my $current_dir;
     my @listed_like_ls;
     my $installed_path = "$config{'library_dir'}/$formula";
     my $formula_bin_folder;
-	if (-e $formula_path) {
-		push (@INC, "$formula_path");
-		require Formula;
-		$formula_selected = Formula->new($installed_path);
-		say "Formula : $formula_selected->{name}";
-		say "Homepage: $formula_selected->{homepage}";
-		$file_name = url_to_filename($formula_selected->{url});
-		$path_downloaded_file = "$build_path/$file_name";
-		if (! -d $build_path) {	mkpath $build_path or die $!; }
-		$result_checked_sha = checked_sha($path_downloaded_file,$formula_selected->{sha1});
-		if (! ((-e $path_downloaded_file) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
-		if ( -e $path_downloaded_file ) {
+    if (formula_is_installed($formula)) { say "Formula is already installed!"; exit 1; }
+    if (-e $formula_path) {
+        push (@INC, "$formula_path");
+        require Formula;
+        $formula_selected = Formula->new($installed_path);
+        say "Formula : $formula_selected->{name}";
+        say "Homepage: $formula_selected->{homepage}";
+        $file_name = url_to_filename($formula_selected->{url});
+        $path_downloaded_file = "$build_path/$file_name";
+        if (! -d $build_path) { mkpath $build_path or die $!; }
+        $result_checked_sha = checked_sha($path_downloaded_file,$formula_selected->{sha1});
+        if (! ((-e $path_downloaded_file) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
+        if ( -e $path_downloaded_file ) {
             $extracted_path = extract_file($path_downloaded_file,$build_path);
             say "extracted_path: $extracted_path";
-		} else {
+        } else {
             say "Download file missed! [$path_downloaded_file]";
             exit 1
         }
@@ -188,36 +198,36 @@ sub brew_install {
             say "Installed dir missed! [$installed_path]";
         }
 
-	} else {
-		say "Formula [$formula] does not exist!";
-		exit 1;
-	}
+    } else {
+        say "Formula [$formula] does not exist!";
+        exit 1;
+    }
 }
 
 sub brew_doctor {
-	say "$program doctor";
+    say "$program doctor";
 }
 
 sub brew_uninstall {
-	my $formula;
-	$formula = shift or usage; 
-	say "$program uninstall";
+    my $formula;
+    $formula = shift or usage; 
+    say "$program uninstall";
 }
 
 sub main {
-	check_dirs;
-	if (! @ARGV) {
-		usage;
-	} else {
-		given ($ARGV[0]) {
-			when ('search') { brew_search($ARGV[1]); }
-			when ('install') { brew_install $ARGV[1]; }
-			when ('list') { brew_list $ARGV[1]; }
-			when ('doctor') { brew_doctor $ARGV[1]; }
-			when ('uninstall') { brew_search $ARGV[1]; }
-			default { usage; }
-		}
-	}
+    check_dirs;
+    if (! @ARGV) {
+        usage;
+    } else {
+        given ($ARGV[0]) {
+            when ('search') { brew_search($ARGV[1]); }
+            when ('install') { brew_install $ARGV[1]; }
+            when ('list') { brew_list $ARGV[1]; }
+            when ('doctor') { brew_doctor $ARGV[1]; }
+            when ('uninstall') { brew_search $ARGV[1]; }
+            default { usage; }
+        }
+    }
 }
 
 main;

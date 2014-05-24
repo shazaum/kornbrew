@@ -41,7 +41,7 @@ sub install {
         "--disable-debug",
         "--enable-ipv6",
         "--disable-dependency-tracking",
-        "--with-default=irc.freenode.net",
+        "--with-default-server=irc.freenode.net",
 
         # Changeable - END
     );
