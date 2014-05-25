@@ -87,7 +87,7 @@ sub extract_file {
     my $extracted_path;
     my $ae = Archive::Extract->new(archive => $file);
     if (-d "$target") {
-        say "Extracting $file";
+        #say "Extracting $file";
         $ae->extract(to => "$target");
         $extracted_path = $ae->extract_path;
         return "$extracted_path";
@@ -147,9 +147,10 @@ sub installer {
 sub main {
     check_dirs;
     installer;
+    say ("--------------- README FIRST! ---------------")
     say ("So far, the instalation is doing great!");
-    say ("Now, you need to logout and log in again to finish the instalation");
-    say ("Rebember: Just type 'brew' to see a command list");
+    say ("Now, you need to 'logout' and log in again to finish the instalation.");
+    say ("Rebember: Just type 'brew' to see a command list.");
 }
 
 main;
