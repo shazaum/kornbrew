@@ -37,8 +37,8 @@ sub check_dirs {
     for (keys %config) {
         $dirname = $config{$_};
         if (! -d $dirname) {
-            make_path($dirname, { verbose => 1 }) or die $!;
-            say 'Created: '.$dirname;
+            make_path($dirname) or die $!;
+            #say 'Created: '.$dirname;
         }
     }
     $ENV{PATH} = "$HOME/opt/bin:$ENV{PATH}";
@@ -147,6 +147,8 @@ sub installer {
 sub main {
     check_dirs;
     installer;
+    say ("Instalation has been sucessfully!");
+    say ("Type 'brew' to see a command list");
 }
 
 main;
