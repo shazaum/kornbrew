@@ -33,6 +33,7 @@ undef $base_dir;
 
 sub check_dirs {
     my $dirname;
+    my $path_env = 'export PATH='."$HOME/opt/bin:$PATH";
     for (keys %config) {
         $dirname = $config{$_};
         if (! -d $dirname) {
@@ -42,7 +43,7 @@ sub check_dirs {
     }
     $ENV{PATH} = "$HOME/opt/bin:$ENV{PATH}";
     open (FILE, ">>$HOME/.profile" || die "Can't write in $HOME/.profile";
-    print (FILE, 'export PATH='."$HOME/opt/bin:$PATH";
+    print (FILE, "$path_env";
     close (FILE);
 }
 
