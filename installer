@@ -42,7 +42,7 @@ sub check_dirs {
         }
     }
     $ENV{PATH} = "$HOME/opt/bin:$ENV{PATH}";
-    open (FILE, ">>$HOME/.profile" || die "Can't write in $HOME/.profile";
+    open (FILE, ">>$HOME/.profile") || die "Can't write in $HOME/.profile";
     print (FILE, "$path_env";
     close (FILE);
 }
