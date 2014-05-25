@@ -1,0 +1,142 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use utf8;
+use 5.14.1;
+
+use constant AUTHOR     => 'Antonio Feitosa aka TeeBSD <https://twitter.com/teebsd>';
+use constant LICENSE    => 'http://opensource.org/licenses/BSD-2-Clause';
+use Env qw(HOME);
+
+use File::Path qw(make_path remove_tree);
+use File::Fetch;
+use Archive::Extract;
+use File::Copy;
+
+my $program;
+my %config;
+
+$program = 'installer';
+
+my $base_dir;
+$base_dir = "$HOME/.kornbrew";
+
+%config = (
+    base_dir        => $base_dir,
+    formula_dir     => "$base_dir/Formulas",
+    library_dir     => "$base_dir/Library",
+    build_dir       => "$base_dir/.builds",
+    install_dir     => "$HOME/opt/bin",
+);
+
+undef $base_dir;
+
+sub check_dirs {
+    my $dirname;
+    for (keys %config) {
+        $dirname = $config{$_};
+        if (! -d $dirname) {
+            make_path($dirname, { verbose => 1 }) or die $!;
+            say 'Created: '.$dirname;
+        }
+    }
+}
+
+sub list_folder {
+    my $path = shift or undef;
+    my $item;
+    my @result;
+    opendir(DIR, $path) or die $!;
+    push(@result,$item) while ($item = readdir(DIR));
+    closedir(DIR);
+    return @result;
+}
+
+sub search_inside_folder { 
+    my $path = shift or undef;
+    my $query = shift or undef;
+    my @listed_like_ls;
+    my @result;
+    @listed_like_ls = list_folder($path);
+    foreach (@listed_like_ls) {
+        if (defined $query) {
+            /$query/ && push (@result, $_);
+        } else {
+            /\w+/ && push (@result, $_);
+        }
+    }
+    return @result;
+}
+
+sub fetch_package {
+    my $url = shift or die $!;
+    my $ff = File::Fetch->new(uri => "$url");
+    $File::Fetch::WARN = 0;
+    say "Fetching $url";
+    my $where = $ff->fetch();
+    #say "Fetched filename: $filename";
+    #say "Fetched in dirname: $dirname";
+}
+
+sub extract_file {
+    my $file = shift or die $!;
+    my $target = shift or die $!;
+    my $extracted_path;
+    my $ae = Archive::Extract->new(archive => $file);
+    if (-d "$target") {
+        say "Extracting $file";
+        $ae->extract(to => "$target");
+        $extracted_path = $ae->extract_path;
+        return "$extracted_path";
+    } else {
+        say "Target: [$target] does not exist!";
+        exit 1;
+    }
+}
+
+sub url_to_filename {
+    my $url = shift or die $!;
+    my @ar_url = split (/\//, $url);
+    return $ar_url[$#ar_url];
+}
+
+sub installer {
+    my $path_downloaded_file;
+    my $file_name;
+    my $formula_selected;
+    my $extracted_path;
+    my $repo_url = "http://github.com/teebsd/kornbrew/tarball/master";
+    chdir ($HOME);
+    $file_name = url_to_filename($repo_url);
+    $path_downloaded_file = "$HOME/$file_name";
+    fetch_package($repo_url);
+    if (-e $file_name) {
+        rename ($file_name, "$file_name.tar.gz") or die $!;
+        $extracted_path = extract_file("$file_name.tar.gz",$HOME);
+    } else {
+        say "Download file missed! [$path_downloaded_file]";
+        exit 1
+    }
+    if (-d $extracted_path) {
+        chdir $extracted_path;
+        #say "CWD: ".getcwd;
+        copy ("brew", "$config{'install_dir'}/brew") or die $!;
+        system ("chmod +x $config{'install_dir'}/brew");
+        system ("cp -r $extracted_path/Formulas/* $config{'formula_dir'}/");
+    } else {
+        say "Package dir missed! [$extracted_path]";
+    }
+    if (-d $extracted_path) {
+        chdir $HOME;
+        remove_tree($extracted_path);
+        } else {
+            say "Extracted dir missed! [$extracted_path]";
+        }
+}
+
+sub main {
+    check_dirs;
+    installer;
+}
+
+main;
