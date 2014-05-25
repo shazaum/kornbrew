@@ -112,7 +112,14 @@ sub installer {
     chdir ($HOME);
     $file_name = url_to_filename($repo_url);
     $path_downloaded_file = "$HOME/$file_name";
-    system ("ftp -o $file_name.tar.gz $repo_url"); 
+    my $so = `uname`;
+    my $fetch_cmd;
+    given ($so) {
+        when ('OpenBSD') { $fetch_cmd = "ftp -o"; }
+        when ('Linux') { $fetch_cmd = "wget -o"; }
+        default { print "Need support do your system $so"; }
+    }
+    system ("$fetch_cmd $file_name.tar.gz $repo_url"); 
     if (-e "$file_name.tar.gz") {
         $extracted_path = extract_file("$file_name.tar.gz",$HOME);
     } else {
