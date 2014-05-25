@@ -207,11 +207,12 @@ sub brew_install {
 sub brew_doctor {
     my $path_dir = $config{'install_dir'};
     my $path_file;
+    my $target_file;
     foreach (search_inside_folder($path_dir)) {
         $path_file = "$path_dir/$_";
         if (-l $path_file) {
-            my $target = readlink ($path_file);
-            if (! -e $target) {
+            $target_file = readlink ($path_file);
+            if (! -e $target_file) {
                 remove_tree($path_file, { verbose => 1 }) or die $!;
             }
         }
