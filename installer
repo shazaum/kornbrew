@@ -108,7 +108,7 @@ sub installer {
     $file_name = url_to_filename($repo_url);
     $path_downloaded_file = "$HOME/$file_name";
     system ("ftp -o $file_name.tar.gz $repo_url"); 
-    if (-e $file_name) {
+    if (-e "$file_name.tar.gz") {
         $extracted_path = extract_file("$file_name.tar.gz",$HOME);
     } else {
         say "Download file missed! [$path_downloaded_file]";
