@@ -14,7 +14,46 @@ I did Kornbrew to suply my needs about installing 3r party software as simple us
 - Don't need to use root in a desktop or workstation(With or without X).
 
 
-ToDo
-----
+How to install
+--------------
 
-I'm rewritting the code to Perl. Thus, Kornbrew can be used, not only in OpenBSD, but in Linux distros, etc.
+Run the installer in your system:
+
+###OpenBSD
+
+`ftp -o - https://raw.githubusercontent.com/TeeBSD/kornbrew/master/installer | perl`
+
+###Linux
+`wget -O - https://raw.githubusercontent.com/TeeBSD/kornbrew/master/installer | perl`
+
+
+Warning
+-------
+
+You need to logoff and log in to finish the instalation. Sorry about that... ;)
+
+
+First steps
+-----------
+
+###Some commands
+
+To list or search *available* formulas:
+
+`brew search` or `brew search <string | regex>`
+
+To list or search *installed* formulas:
+
+`brew list` or `brew list <string | regex>`
+
+To *install* some package:
+
+`brew install <string>`
+
+To *uninstall* some package:
+
+`brew uninstall <string>`
+
+To *clean* broken symlinks after *uninstall* command:
+
+`brew doctor`
