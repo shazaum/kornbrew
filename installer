@@ -107,9 +107,8 @@ sub installer {
     chdir ($HOME);
     $file_name = url_to_filename($repo_url);
     $path_downloaded_file = "$HOME/$file_name";
-    fetch_package($repo_url);
+    system ("ftp -o $file_name.tar.gz $repo_url"); 
     if (-e $file_name) {
-        rename ($file_name, "$file_name.tar.gz") or die $!;
         $extracted_path = extract_file("$file_name.tar.gz",$HOME);
     } else {
         say "Download file missed! [$path_downloaded_file]";
