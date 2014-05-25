@@ -109,12 +109,17 @@ sub fetch_package {
     my $ff = File::Fetch->new(uri => "$url");
     my $dirname = "$config{'build_dir'}/$formula/";
     if (! -d $dirname) { make_path($dirname, { verbose => 1 }) or die $!; }
-    $File::Fetch::WARN = 0;
+    $file::Fetch::BLACKLIST = [qw|curl|];
+    $File::Fetch::WARN = 1;
+    $File::Fetch::DEBUG= 1;
+
+
     say "Fetching $url";
-    my $where = $ff->fetch(to => $dirname);
+
+    my $where = $ff->fetch(to => $dirname) or die $!;
     my $filename = $ff->output_file;
-    #say "Fetched filename: $filename";
-    #say "Fetched in dirname: $dirname";
+    say "Fetched filename: $filename";
+    say "Fetched in dirname: $dirname";
 }
 
 sub extract_file {
