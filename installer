@@ -113,7 +113,7 @@ sub installer {
     $file_name = url_to_filename($repo_url);
     $path_downloaded_file = "$HOME/$file_name";
     my $so = `uname`;
-    chop $so;
+    chomp $so;
     my $fetch_cmd;
     given ($so) {
         when ('OpenBSD') { $fetch_cmd = "ftp -o"; }
