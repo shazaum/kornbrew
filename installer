@@ -147,7 +147,7 @@ sub installer {
 sub main {
     check_dirs;
     installer;
-    say ("--------------- README FIRST! ---------------")
+    say ("--------------- README FIRST! ---------------");
     say ("So far, the instalation is doing great!");
     say ("Now, you need to 'logout' and log in again to finish the instalation.");
     say ("Rebember: Just type 'brew' to see a command list.");
