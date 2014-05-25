@@ -27,6 +27,7 @@ $base_dir = "$HOME/.kornbrew";
     library_dir     => "$base_dir/Library",
     build_dir       => "$base_dir/.builds",
     install_dir     => "$HOME/opt/bin",
+    home_bin        => "$HOME/bin",
 );
 
 undef $base_dir;
@@ -116,8 +117,8 @@ sub installer {
     }
     if (-d $extracted_path) {
         chdir $extracted_path;
-        copy ("brew", "$config{'install_dir'}/brew") or die $!;
-        system ("chmod +x $config{'install_dir'}/brew");
+        copy ("brew", "$config{'home_bin'}/brew") or die $!;
+        system ("chmod +x $config{'home_bin'}/brew");
         system ("cp -r $extracted_path/Formulas/* $config{'formula_dir'}/");
     } else {
         say "Package dir missed! [$extracted_path]";
