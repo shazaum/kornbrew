@@ -74,8 +74,6 @@ sub fetch_package {
     $File::Fetch::WARN = 0;
     say "Fetching $url";
     my $where = $ff->fetch();
-    #say "Fetched filename: $filename";
-    #say "Fetched in dirname: $dirname";
 }
 
 sub extract_file {
@@ -119,7 +117,6 @@ sub installer {
     }
     if (-d $extracted_path) {
         chdir $extracted_path;
-        #say "CWD: ".getcwd;
         copy ("brew", "$config{'install_dir'}/brew") or die $!;
         system ("chmod +x $config{'install_dir'}/brew");
         system ("cp -r $extracted_path/Formulas/* $config{'formula_dir'}/");
