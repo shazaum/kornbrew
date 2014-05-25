@@ -115,7 +115,7 @@ sub installer {
     my $fetch_cmd;
     given ($so) {
         when ('OpenBSD') { $fetch_cmd = "ftp -o"; }
-        when ('Linux') { $fetch_cmd = "wget -o"; }
+        when ('Linux') { $fetch_cmd = "wget -O"; }
         default { print "Need support do your system $so"; }
     }
     system ("$fetch_cmd $file_name.tar.gz $repo_url"); 
