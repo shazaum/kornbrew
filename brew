@@ -111,6 +111,7 @@ sub fetch_package {
     if (! -d $dirname) { make_path($dirname, { verbose => 1 }) or die $!; }
     #$File::Fetch::BLACKLIST = [qw|curl|];
     #$File::Fetch::DEBUG= 1;
+    #Need to use curl -O -L
     $File::Fetch::WARN = 0;
     say "Fetching $url";
     my $where = $ff->fetch(to => $dirname) or die $ff->error(1);
