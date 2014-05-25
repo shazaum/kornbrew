@@ -147,8 +147,9 @@ sub installer {
 sub main {
     check_dirs;
     installer;
-    say ("Instalation has been sucessfully!");
-    say ("Type 'brew' to see a command list");
+    say ("So far, the instalation is doing great!");
+    say ("Now, you need to logout and log in again to finish the instalation");
+    say ("Rebember: Just type 'brew' to see a command list");
 }
 
 main;
