@@ -125,6 +125,7 @@ sub installer {
     if (-d $extracted_path) {
         chdir $HOME;
         remove_tree($extracted_path);
+        remove_tree("$file_name.tar.gz");
         } else {
             say "Extracted dir missed! [$extracted_path]";
         }
