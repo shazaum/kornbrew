@@ -40,13 +40,13 @@ sub install {
     # Changeable - END
     );
     push(@command,"$_ ") foreach (@cfg_flags);
-    system("@command") or die $!;
-    system("$make") or die $!;
-    system("$make install") or die $!;
+    system("@command");
+    system("$make");
+    system("$make install");
     # Changeable - START
     
-    system("ftp http://python-distribute.org/distribute_setup.py") or die $!;
-    system("python3 distribute_setup.py") or die $!;
+    system("ftp http://python-distribute.org/distribute_setup.py");
+    system("python distribute_setup.py");
 
     # Changeable - END
 }

@@ -109,14 +109,12 @@ sub fetch_package {
     my $ff = File::Fetch->new(uri => "$url");
     my $dirname = "$config{'build_dir'}/$formula/";
     if (! -d $dirname) { make_path($dirname, { verbose => 1 }) or die $!; }
-    $file::Fetch::BLACKLIST = [qw|curl|];
-    $File::Fetch::WARN = 1;
-    $File::Fetch::DEBUG= 1;
-
-
+    #$File::Fetch::BLACKLIST = [qw|curl|];
+    #$File::Fetch::DEBUG= 1;
+    $File::Fetch::WARN = 0;
     say "Fetching $url";
-
-    my $where = $ff->fetch(to => $dirname) or die $!;
+    my $where = $ff->fetch(to => $dirname) or die $ff->error(1);
+    #my $where = $ff->fetch(to => $dirname);
     my $filename = $ff->output_file;
     say "Fetched filename: $filename";
     say "Fetched in dirname: $dirname";
@@ -178,7 +176,8 @@ sub brew_install {
         if (! -d $build_path) { make_path($build_path, { verbose => 1 }) or die $!; }
         $result_checked_sha = checked_sha($path_downloaded_file,$formula_selected->{sha1});
         if (! ((-e $path_downloaded_file) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
-        if (-e $path_downloaded_file) {
+        $result_checked_sha = checked_sha($path_downloaded_file,$formula_selected->{sha1});
+        if ((-e $path_downloaded_file) && $result_checked_sha) {
             $extracted_path = extract_file($path_downloaded_file,$build_path);
             #say "extracted_path: $extracted_path";
         } else {
