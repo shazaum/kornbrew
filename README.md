@@ -14,6 +14,11 @@ I did Kornbrew to suply my needs about installing 3r party software as simple us
 - Don't need to use root in a desktop or workstation(With or without X).
 
 
+Requirements
+------------
+
+- Compilation packages (Ex.: apt-get install build-essential)
+
 How to install
 --------------
 
