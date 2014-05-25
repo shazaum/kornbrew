@@ -8,7 +8,7 @@ use constant AUTHOR     => 'Antonio Feitosa aka TeeBSD <https://twitter.com/teeb
 use constant LICENSE    => 'http://opensource.org/licenses/BSD-2-Clause';
 use Env qw(HOME);
 
-#use Data::Dumper;
+use Data::Dumper;
 use File::Path qw(make_path remove_tree);
 use File::Fetch;
 use Digest::SHA;
@@ -79,12 +79,12 @@ sub search_inside_folder {
 
 sub brew_search {
     my $formula = shift or undef;
-    say foreach search_inside_folder($config{'formula_dir'}, $formula);
+    say foreach (search_inside_folder($config{'formula_dir'}, $formula));
 }
 
 sub brew_list { 
     my $formula = shift or undef;
-    say foreach search_inside_folder($config{'library_dir'}, $formula);
+    say foreach (search_inside_folder($config{'library_dir'}, $formula));
 }
 
 sub checked_sha {
@@ -92,7 +92,7 @@ sub checked_sha {
     my $file = shift or undef;
     my $sha_check = shift or undef;
     my $sha = Digest::SHA->new($alg);
-    if (-e $file ) {
+    if (-e $file) {
         $sha->addfile($file);
         if ($sha->hexdigest eq $sha_check) {
             return 1;
@@ -121,7 +121,7 @@ sub extract_file {
     my $file = shift or die $!;
     my $target = shift or die $!;
     my $extracted_path;
-    my $ae = Archive::Extract->new( archive => $file );
+    my $ae = Archive::Extract->new(archive => $file);
     if (-d "$target") {
         say "Extracting $file";
         $ae->extract(to => "$target");
@@ -141,13 +141,12 @@ sub url_to_filename {
 
 sub formula_is_installed {
     my $formula = shift or usage;
-    if ( -d "$config{'library_dir'}/$formula") {
+    if (-d "$config{'library_dir'}/$formula") {
         return 1;
     } else {
         return 0;
     }
 }
-
 
 sub brew_install {
     my $formula = shift or usage;
@@ -174,27 +173,27 @@ sub brew_install {
         if (! -d $build_path) { make_path($build_path, { verbose => 1 }) or die $!; }
         $result_checked_sha = checked_sha($path_downloaded_file,$formula_selected->{sha1});
         if (! ((-e $path_downloaded_file) && $result_checked_sha)) { fetch_package($formula_selected->{url},$formula); }
-        if ( -e $path_downloaded_file ) {
+        if (-e $path_downloaded_file) {
             $extracted_path = extract_file($path_downloaded_file,$build_path);
             #say "extracted_path: $extracted_path";
         } else {
             say "Download file missed! [$path_downloaded_file]";
             exit 1
         }
-        if ( -d $extracted_path ) {
+        if (-d $extracted_path) {
             chdir $extracted_path;
             #say "CWD: ".getcwd;
             $formula_selected->install();
         } else {
             say "Package dir missed! [$extracted_path]";
         }
-        if ( -d $installed_path ) {
+        if (-d $installed_path) {
             chdir $installed_path;
             #say "CWD: ".getcwd;
             say "Installed: $installed_path";
             my $formula_bin_folder = "$installed_path/bin";
             @listed_like_ls = list_folder("$installed_path/bin");
-            symlink ("$formula_bin_folder/$_","$config{'install_dir'}/$_") foreach search_inside_folder($formula_bin_folder);
+            symlink ("$formula_bin_folder/$_","$config{'install_dir'}/$_") foreach (search_inside_folder($formula_bin_folder));
         } else {
             say "Installed dir missed! [$installed_path]";
         }
@@ -206,7 +205,17 @@ sub brew_install {
 }
 
 sub brew_doctor {
-    say "$program doctor";
+    my $path_dir = $config{'install_dir'};
+    my $path_file;
+    foreach (search_inside_folder($path_dir)) {
+        $path_file = "$path_dir/$_";
+        if (-l $path_file) {
+            my $target = readlink ($path_file);
+            if (! -e $target) {
+                remove_tree($path_file, { verbose => 1 }) or die $!;
+            }
+        }
+    }
 }
 
 sub brew_uninstall {
